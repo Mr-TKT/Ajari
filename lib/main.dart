@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -5,34 +6,37 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'Profile_Page.dart';
 import 'User_Registration.dart';
 import 'Request_Michijune.dart';
-import 'Login_Page.dart'; // ログインページ
+import 'Login_Page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Firebaseの初期化
-  runApp(ProviderScope(child: MyApp()));
+  await Firebase.initializeApp();
+
+  runApp(
+    ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Flutter Firebase Auth Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      // 初期ルート（ログイン画面またはプロフィールページ）
       home: AuthGate(),
       routes: {
-        '/profile': (context) => ProfilePage(), // プロフィールページ
-        '/register': (context) => UserRegistrationPage(), // 登録ページ
-        '/request_michijune': (context) => RequestMichijunePage(), // 道じゅねー申請ページ
+        '/profile': (context) => ProfilePage(),
+        '/register': (context) => UserRegistrationPage(),
+        '/request_michijune': (context) => RequestMichijunePage(),
       },
     );
   }
 }
 
-// ログイン状態を管理して、適切なページへリダイレクトする
 class AuthGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,13 +48,66 @@ class AuthGate extends ConsumerWidget {
         }
 
         if (snapshot.hasData) {
-          // ユーザーがログインしている場合、プロフィールページへ
-          return ProfilePage();
+          return UserHomePage(); // Homeページにリダイレクト
         } else {
-          // ログインしていない場合、ログインページへ
           return LoginPage();
         }
       },
+    );
+  }
+}
+
+class UserHomePage extends StatefulWidget {
+  @override
+  _UserHomePageState createState() => _UserHomePageState();
+}
+
+class _UserHomePageState extends State<UserHomePage> {
+  int _selectedIndex = 0;
+  late bool _isPresident;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserRole();
+  }
+
+  void _fetchUserRole() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      final userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      setState(() {
+        _isPresident = userData['isPresident'] ?? false;
+      });
+    }
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _selectedIndex == 0
+          ? ProfilePage()
+          : _isPresident
+              ? RequestMichijunePage()
+              : Scaffold(
+                  appBar: AppBar(title: Text('アクセス権限')),
+                  body: Center(child: Text('青年会会長ではないので、このページを開くことができません。')),
+                ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'プロフィール'),
+          BottomNavigationBarItem(icon: Icon(Icons.request_page), label: '道じゅねー申請'),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+      ),
     );
   }
 }
