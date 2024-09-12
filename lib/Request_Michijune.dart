@@ -10,6 +10,25 @@ class RequestMichijunePage extends StatefulWidget {
 class _RequestMichijunePageState extends State<RequestMichijunePage> {
   final _dateController = TextEditingController();
   final _locationController = TextEditingController();
+  bool _isPresident = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUserStatus();
+  }
+
+  void _checkUserStatus() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
+      if (userDoc.exists) {
+        setState(() {
+          _isPresident = userDoc.data()?['isPresident'] ?? false;
+        });
+      }
+    }
+  }
 
   void _submitRequest() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -28,6 +47,12 @@ class _RequestMichijunePageState extends State<RequestMichijunePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_isPresident) {
+      return Scaffold(
+        body: Center(child: Text('青年会会長ではないため、このページを開くことができません。')),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text('道じゅねー申請')),
       body: Padding(

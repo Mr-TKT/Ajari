@@ -64,7 +64,8 @@ class UserHomePage extends StatefulWidget {
 
 class _UserHomePageState extends State<UserHomePage> {
   int _selectedIndex = 0;
-  late bool _isPresident;
+  bool _isPresident = false;
+  bool _isLoading = true; // ローディング状態を管理するフラグ
 
   @override
   void initState() {
@@ -76,10 +77,28 @@ class _UserHomePageState extends State<UserHomePage> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      final userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      setState(() {
-        _isPresident = userData['isPresident'] ?? false;
-      });
+      try {
+        final userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (userData.exists) {
+          setState(() {
+            _isPresident = userData.data()?['isPresident'] ?? false;
+          });
+        } else {
+          // ドキュメントが存在しない場合の処理
+          setState(() {
+            _isPresident = false; // デフォルト値
+          });
+        }
+      } catch (e) {
+        // エラーが発生した場合の処理
+        setState(() {
+          _isPresident = false; // デフォルト値
+        });
+      } finally {
+        setState(() {
+          _isLoading = false; // ローディング終了
+        });
+      }
     }
   }
 
@@ -91,6 +110,10 @@ class _UserHomePageState extends State<UserHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       body: _selectedIndex == 0
           ? ProfilePage()
