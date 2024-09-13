@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart'; // 日付フォーマット用
+
+const Color kPrimaryColor = Colors.teal; // エイサーのイメージカラー
+const Color kTextColorPrimary = Color(0xFFffffff);
+const Color kTextColorSecondary = Color(0xFF9E9E9E);
 
 class RequestMichijunePage extends StatefulWidget {
   @override
@@ -154,35 +159,149 @@ class _RequestMichijunePageState extends State<RequestMichijunePage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('道じゅねー申請')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            ElevatedButton(
-              onPressed: () => _selectDate(context),
-              child: Text(_selectedDate.isEmpty ? '日付を選択' : '選択した日付: $_selectedDate'),
-            ),
-            ElevatedButton(
-              onPressed: () => _selectStartTime(context),
-              child: Text(_startTime.isEmpty ? '開始時間を選択' : '開始時間: $_startTime'),
-            ),
-            ElevatedButton(
-              onPressed: () => _selectEndTime(context),
-              child: Text(_endTime.isEmpty ? '終了時間を選択' : '終了時間: $_endTime'),
-            ),
-            TextField(
-              controller: _locationController,
-              decoration: InputDecoration(labelText: '場所'),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _submitRequest,
-              child: Text('申請'),
-            ),
-          ],
+      appBar: AppBar(
+        title: Text(
+          '道じゅねー申請',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold
+          ),
         ),
+        backgroundColor: kPrimaryColor, // エイサーのイメージに合わせた色
       ),
+      body: LayoutBuilder(
+        builder: (context, Constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: Constraints.maxHeight
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          spreadRadius: 4,
+                          blurRadius: 8,
+                          offset: Offset(0, 4), // changes position of shadow
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Association: $_youthGroupName',
+                          style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                        ),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => _selectDate(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)
+                            )
+                          ),
+                          child: Text(_selectedDate.isEmpty ? '日付を選択' : '選択した日付: $_selectedDate',
+                          style: TextStyle(color: Colors.white),),
+                        ),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => _selectStartTime(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)
+                            )
+                          ),
+                          child: Text(_startTime.isEmpty ? '開始時間を選択' : '開始時間: $_startTime',
+                          style: TextStyle(color: Colors.white),),
+                        ),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => _selectEndTime(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)
+                            )
+                          ),
+                          child: Text(_endTime.isEmpty ? '終了時間を選択' : '終了時間: $_endTime',
+                          style: TextStyle(color: Colors.white),),
+                        ),
+                        SizedBox(height: 16),
+                        CustomTextField(
+                          controller: _locationController,
+                          labelText: '場所',
+                          hintText: '場所を入力してください',
+                          obscureText: false,
+                        ),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _submitRequest,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryColor,
+                          ),
+                          child: Text('申請', style: TextStyle(color: Colors.white),),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+      ),
+    );
+  }
+}
+
+class CustomTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String labelText;
+  final String hintText;
+  final bool obscureText;
+
+  const CustomTextField({
+    Key? key,
+    required this.controller,
+    required this.labelText,
+    required this.hintText,
+    required this.obscureText,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        hintStyle: TextStyle(color: kTextColorSecondary),
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: kPrimaryColor),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: kTextColorSecondary),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      ),
+      obscureText: obscureText,
     );
   }
 }
