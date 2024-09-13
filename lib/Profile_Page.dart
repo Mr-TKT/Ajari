@@ -336,15 +336,10 @@ class _ProfilePageState extends State<ProfilePage> {
             );
           } else {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.pushNamed(context, '/register').then((_) {
-                // ProfilePageに戻ったときにリフレッシュする
-                setState(() {
-                  // 必要なデータを再取得する処理など
-                  _userFuture = _fetchUserData();
-                  _youthGroups = _fetchYouthGroups();
-                  _permittedDataFuture = _fetchPermittedData(); // 道じゅねーのデータを取得
-                });
-              });
+              Navigator.of(context).pushNamedAndRemoveUntil(
+        '/register', // 遷移先のルート
+        (Route<dynamic> route) => false, // すべてのルートをポップ
+      );
             });
             return Center(child: CircularProgressIndicator());
           }

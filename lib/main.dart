@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => ProfilePage(),
         '/register': (context) => UserRegistrationPage(),
         '/request_michijune': (context) => RequestMichijunePage(),
+        '/home':(context) => UserHomePage(),
       },
     );
   }

@@ -42,7 +42,11 @@ void _registerUser() async {
       });
 
       // スタック内の全画面を削除して、ProfilePageに遷移する
-      Navigator.pop(context);
+      // Navigator.pop(context);
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/home', // 遷移先のルート
+        (Route<dynamic> route) => false, // すべてのルートをポップ
+      );
     }
   } else {
     setState(() {

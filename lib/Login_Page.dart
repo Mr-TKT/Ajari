@@ -19,7 +19,10 @@ class _LoginPageState extends State<LoginPage> {
         password: passwordController.text,
       );
       // ログイン成功後、次のページへ
-      Navigator.pushReplacementNamed(context, '/profilePage');
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/home', // 遷移先のルート
+        (Route<dynamic> route) => false, // すべてのルートをポップ
+      );
     } catch (e) {
       setState(() {
         errorMessage = 'ログインに失敗しました。メールアドレスかパスワードが間違っています。';
@@ -89,7 +92,10 @@ class _SignUpPageState extends State<SignUpPage> {
         password: passwordController.text,
       );
       // アカウント作成後、プロフィール入力ページに遷移
-      Navigator.pushReplacementNamed(context, '/profilePage');
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/home', // 遷移先のルート
+        (Route<dynamic> route) => false, // すべてのルートをポップ
+      );
     } catch (e) {
       setState(() {
         errorMessage = 'アカウント作成に失敗しました。';
