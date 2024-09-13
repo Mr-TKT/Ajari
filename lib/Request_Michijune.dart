@@ -1,3 +1,4 @@
+import 'package:ajari/Request_Michijune_History.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -53,6 +54,7 @@ class _RequestMichijunePageState extends State<RequestMichijunePage> {
         'location': _locationController.text,
         'permission': false,
         'requestDenied': false,
+        'requestDateTime': Timestamp.now(), // 申請日時
       });
 
       _clearInputFields(); // 入力フィールドをリセット
@@ -179,129 +181,114 @@ class _RequestMichijunePageState extends State<RequestMichijunePage> {
               child: Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Center(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          spreadRadius: 4,
-                          blurRadius: 8,
-                          offset: Offset(0, 4), // changes position of shadow
-                        ),
-                      ],
-                    ),
-                    padding: EdgeInsets.all(16.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Association: $_youthGroupName',
-                          style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                  child: Column(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              spreadRadius: 4,
+                              blurRadius: 8,
+                              offset: Offset(0, 4), // changes position of shadow
                             ),
+                          ],
                         ),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => _selectDate(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrimaryColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)
-                            )
-                          ),
-                          child: Text(_selectedDate.isEmpty ? '日付を選択' : '選択した日付: $_selectedDate',
-                          style: TextStyle(color: Colors.white),),
+                        padding: EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Association: $_youthGroupName',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                            ),
+                            SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => _selectDate(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kPrimaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)
+                                )
+                              ),
+                              child: Text(_selectedDate.isEmpty ? '日付を選択' : '選択した日付: $_selectedDate',
+                              style: TextStyle(color: Colors.white),),
+                            ),
+                            SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => _selectStartTime(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kPrimaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)
+                                )
+                              ),
+                              child: Text(_startTime.isEmpty ? '開始時間を選択' : '開始時間: $_startTime',
+                              style: TextStyle(color: Colors.white),),
+                            ),
+                            SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => _selectEndTime(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kPrimaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)
+                                )
+                              ),
+                              child: Text(_endTime.isEmpty ? '終了時間を選択' : '終了時間: $_endTime',
+                              style: TextStyle(color: Colors.white),),
+                            ),
+                            SizedBox(height: 16),
+                            TextField(
+                              controller: _locationController,
+                              decoration: InputDecoration(
+                                labelText: '場所',
+                                hintText: '場所を入力してください',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _submitRequest,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kPrimaryColor,
+                              ),
+                              child: Text('申請', style: TextStyle(color: Colors.white),),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => _selectStartTime(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrimaryColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)
-                            )
-                          ),
-                          child: Text(_startTime.isEmpty ? '開始時間を選択' : '開始時間: $_startTime',
-                          style: TextStyle(color: Colors.white),),
+                      ),
+                      SizedBox(height: 32),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RequestMichijuneHistoryPage(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPrimaryColor,
                         ),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => _selectEndTime(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrimaryColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)
-                            )
-                          ),
-                          child: Text(_endTime.isEmpty ? '終了時間を選択' : '終了時間: $_endTime',
-                          style: TextStyle(color: Colors.white),),
-                        ),
-                        SizedBox(height: 16),
-                        CustomTextField(
-                          controller: _locationController,
-                          labelText: '場所',
-                          hintText: '場所を入力してください',
-                          obscureText: false,
-                        ),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _submitRequest,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrimaryColor,
-                          ),
-                          child: Text('申請', style: TextStyle(color: Colors.white),),
-                        ),
-                      ],
-                    ),
+                        child: Text('申請履歴', style: TextStyle(color: Colors.white),),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           );
-        }
+        },
       ),
-    );
-  }
-}
-
-class CustomTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String labelText;
-  final String hintText;
-  final bool obscureText;
-
-  const CustomTextField({
-    Key? key,
-    required this.controller,
-    required this.labelText,
-    required this.hintText,
-    required this.obscureText,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: labelText,
-        hintText: hintText,
-        hintStyle: TextStyle(color: kTextColorSecondary),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: kPrimaryColor),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: kTextColorSecondary),
-        ),
-        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      ),
-      obscureText: obscureText,
     );
   }
 }
