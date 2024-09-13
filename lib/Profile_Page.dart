@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -10,12 +12,14 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   late Future<DocumentSnapshot<Map<String, dynamic>>> _userFuture;
   late Future<List<String>> _youthGroups;
+  late Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _permittedDataFuture;
 
   @override
   void initState() {
     super.initState();
     _userFuture = _fetchUserData();
     _youthGroups = _fetchYouthGroups();
+    _permittedDataFuture = _fetchPermittedData(); // 道じゅねーのデータを取得
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>> _fetchUserData() async {
@@ -30,6 +34,38 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<List<String>> _fetchYouthGroups() async {
     final snapshot = await FirebaseFirestore.instance.collection('youthGroups').get();
     return snapshot.docs.map((doc) => doc.id).toList();
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _fetchPermittedData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final youthGroup = userData.data()?['youthGroup'];
+      if (youthGroup != null) {
+        final snapshot = await FirebaseFirestore.instance.collection('permitted')
+            .where('youthGroup', isEqualTo: youthGroup)
+            .get();
+        return snapshot.docs;
+      }
+    }
+    return [];
+  }
+
+  void _showImageDialog(String url) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            child: InteractiveViewer(
+              child: Image.network(url),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _showEditDialog(String fieldName, String initialValue, List<String>? options, Function(String) onUpdate) async {
@@ -113,7 +149,10 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Text('ログアウト'),
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
-                Navigator.of(context).pushReplacementNamed('/');
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/', // ログイン画面のルート名
+                  (route) => false, // すべての画面をポップする
+                );
               },
             ),
           ],
@@ -225,13 +264,87 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ),
                     ),
+                    SizedBox(height: 16),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            "許可済み道じゅねー",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.black,
+                            ),
+                          ),
+                          SizedBox(height: 14),
+                          Expanded(
+                            child: FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                              future: _permittedDataFuture,
+                              builder: (context, permittedSnapshot) {
+                                if (permittedSnapshot.connectionState == ConnectionState.waiting) {
+                                  return Center(child: CircularProgressIndicator());
+                                }
+                            
+                                if (permittedSnapshot.hasError) {
+                                  return Center(child: Text('Error: ${permittedSnapshot.error}'));
+                                }
+                            
+                                if (permittedSnapshot.hasData && permittedSnapshot.data != null) {
+                                  final permittedDocs = permittedSnapshot.data!;
+                                  if (permittedDocs.isEmpty) {
+                                    return _buildNoPermittedCard();
+                                  }
+                                  return ListView(
+                                    children: permittedDocs.map((doc) {
+                                      final data = doc.data();
+                                      final date = data['date'] ?? 'N/A';
+                                      final startTime = data['startTime'] ?? 'N/A';
+                                      final endTime = data['endTime'] ?? 'N/A';
+                                      final imageUrl = data['url'] ?? ''; // 画像URLを取得
+                            
+                                      return Container(
+                                        color: Colors.white,
+                                        child: Card(
+                                          color: Colors.white,
+                                          margin: EdgeInsets.symmetric(vertical: 8.0),
+                                          child: ListTile(
+                                            contentPadding: EdgeInsets.all(16.0),
+                                            title: Text('Date: $date'),
+                                            subtitle: Text('Start Time: $startTime\nEnd Time: $endTime'),
+                                            onTap: () {
+                                              if (imageUrl.isNotEmpty) {
+                                                _showImageDialog(imageUrl); // 画像を表示
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  );
+                                }
+                            
+                                return _buildNoPermittedCard();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
             );
           } else {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.pushReplacementNamed(context, '/register');
+              Navigator.pushNamed(context, '/register').then((_) {
+                // ProfilePageに戻ったときにリフレッシュする
+                setState(() {
+                  // 必要なデータを再取得する処理など
+                  _userFuture = _fetchUserData();
+                  _youthGroups = _fetchYouthGroups();
+                  _permittedDataFuture = _fetchPermittedData(); // 道じゅねーのデータを取得
+                });
+              });
             });
             return Center(child: CircularProgressIndicator());
           }
@@ -268,6 +381,19 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+  
+  Widget _buildNoPermittedCard() {
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      margin: EdgeInsets.symmetric(vertical: 8.0),
+      child: ListTile(
+        contentPadding: EdgeInsets.all(16.0),
+        title: Text('No Permitted Junes'),
+        subtitle: Text('許可された道じゅねーはまだありません。'),
       ),
     );
   }

@@ -1,4 +1,3 @@
-import 'package:ajari/Profile_Page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -29,30 +28,28 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     });
   }
 
-  void _registerUser() async {
-    if (_selectedYouthGroup != null) {
-      final currentUser = FirebaseAuth.instance.currentUser;
+void _registerUser() async {
+  if (_selectedYouthGroup != null) {
+    final currentUser = FirebaseAuth.instance.currentUser;
 
-      if (currentUser != null) {
-        await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).set({
-          'name': _nameController.text,
-          'isPresident': _isPresident,
-          'youthGroup': _selectedYouthGroup,
-          'permission': false,
-          'requestDenied': false,
-        });
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => ProfilePage(),
-          ),
-        );
-      }
-    } else {
-      setState(() {
-        _errorMessage = '青年会を選択してください。';
+    if (currentUser != null) {
+      await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).set({
+        'name': _nameController.text,
+        'isPresident': _isPresident,
+        'youthGroup': _selectedYouthGroup,
+        'permission': false,
+        'requestDenied': false,
       });
+
+      // スタック内の全画面を削除して、ProfilePageに遷移する
+      Navigator.pop(context);
     }
+  } else {
+    setState(() {
+      _errorMessage = '青年会を選択してください。';
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
