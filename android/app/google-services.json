@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "412820991251",
+    "project_id": "ajari-763e1",
+    "storage_bucket": "ajari-763e1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:412820991251:android:ef30ca7fb371fafcee3ee6",
+        "android_client_info": {
+          "package_name": "com.example.ajari"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMp2zwY93utcvFR6r1laBPAfE5O29ir8c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
