@@ -1,6 +1,7 @@
 # ajari
 
-A new Flutter project.
+やんばるハックツハッカソンで作成したチーム「あじゃり」のプロダクトです
+チームメンバーのリポジトリ：https://github.com/maekuro/Ajari
 
 ## Getting Started
 
